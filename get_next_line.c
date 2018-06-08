@@ -13,6 +13,16 @@
 
 #include "get_next_line.h"
 
+/*
+** clean_exit si read == -1 || buf de read == '\0'
+*/
+
+int 		ft_clean_exit(int err, char **str)
+{
+	ft_strdel(str);
+	return (err);
+}
+
 static int	ft_read_file(char **str, int fd)
 {
 	char	*buf;
@@ -23,7 +33,7 @@ static int	ft_read_file(char **str, int fd)
 	if (ret > 0)
 	{
 		buf[ret] = '\0';
-		*str = ft_strmcat(*str, buf);
+		*str = ft_strcat_free(*str, buf);
 	}
 	free(buf);
 	return (ret);
@@ -31,7 +41,7 @@ static int	ft_read_file(char **str, int fd)
 
 int			get_next_line(const int fd, char **line)
 {
-	static char	*str = "BOOM";
+	static char	*str = NULL;
 	char		*tmp;
 	int			ret;
 	char		*free_str;
@@ -41,16 +51,17 @@ int			get_next_line(const int fd, char **line)
 	while (!(tmp = ft_strchr(str, '\n')))
 	{
 		ret = ft_read_file(&str, fd);
-		if (ret == 0 && !(ft_strlen(str)))
-			return (0);
+		if ((ret == 0 && !(ft_strlen(str))) || ret == -1)
+			return (ft_clean_exit(ret, &str));
 		if (ret == 0)
 			str = ft_strjoin(str, "\n");
-		if (ret < 0)
-			return (-1);
 	}
 	free_str = str;
 	*line = ft_strsub(str, 0, ft_strlen(str) - ft_strlen(tmp));
-	str = ft_strdup(++tmp);
-	free(free_str);
-	return (1);
+	if (tmp && *(tmp + 1) != '\0')
+		str = ft_strdup(++tmp);
+	else
+		str = NULL;
+	ft_strdel(&free_str);
+	return(1);
 }
